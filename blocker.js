@@ -1,9 +1,9 @@
 (function() {
-    // 1. Inicialización Universal de Google (Crea el idioma de Google si no existe)
+    // 1. Inicialización Universal de Google
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function(){ dataLayer.push(arguments); };
 
-    // 2. Estado inicial por defecto (Denegado para seguridad legal)
+    // 2. Estado inicial por defecto
     gtag('consent', 'default', {
         'analytics_storage': 'denied',
         'ad_storage': 'denied',
@@ -11,9 +11,9 @@
         'ad_personalization': 'denied'
     });
 
-    // 3. Lógica para crear el Banner visual (Tu banner original)
+    // 3. Lógica para crear el Banner
     function crearBanner() {
-        if (document.getElementById('mi-banner-cookies')) return; // No duplicar
+        if (document.getElementById('mi-banner-cookies')) return;
         
         const banner = document.createElement('div');
         banner.id = 'mi-banner-cookies';
@@ -28,7 +28,7 @@
         document.body.appendChild(banner);
     }
 
-    // 4. Función Maestra (La que hablábamos antes)
+    // 4. Función Maestra
     window.actualizarConsentimiento = function(opcion) {
         if (opcion === 'todo') {
             gtag('consent', 'update', {
@@ -42,7 +42,6 @@
             localStorage.setItem('cookies_decision', 'rechazo');
         }
         
-        // Disparar evento para que Google genere el GCS
         gtag('event', 'consent_update');
         
         // Ocultar banner
@@ -50,8 +49,14 @@
         if(banner) banner.style.display = 'none';
     };
 
-    // Lanzar el banner si no hay decisión previa
+    // --- ¡ESTO ES LO QUE TE FALTABA! ---
+    // Ejecutar el banner si no hay decisión previa
     if (!localStorage.getItem('cookies_decision')) {
-        crearBanner();
+        // Esperamos a que la web cargue para que el body exista
+        if (document.body) {
+            crearBanner();
+        } else {
+            document.addEventListener('DOMContentLoaded', crearBanner);
+        }
     }
 })();
