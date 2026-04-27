@@ -1,80 +1,85 @@
 (function() {
-    // 1. Configuración de Gtag (Google Consent Mode)
+    // 1. Inicialización de Consentimiento (Google Consent Mode v2)
     window.dataLayer = window.dataLayer || [];
     window.gtag = window.gtag || function(){ dataLayer.push(arguments); };
 
-    // 2. Inyección de Estilos Profesionales
+    gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'functionality_storage': 'denied',
+        'security_storage': 'granted'
+    });
+
+    // 2. Estilos (Modernos, estilo SaaS)
     const style = document.createElement('style');
     style.innerHTML = `
-        #mi-banner-cookies { position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; background: #fff !important; z-index: 99999999 !important; padding: 20px !important; box-shadow: 0 -5px 15px rgba(0,0,0,0.2) !important; font-family: sans-serif !important; border-top: 4px solid #007bff !important; }
-        .btn-cookie { padding: 12px 24px !important; border-radius: 6px !important; border: none !important; cursor: pointer !important; margin: 5px !important; font-weight: 600 !important; font-size: 14px !important; }
-        .btn-blue { background: #007bff !important; color: white !important; }
-        .btn-red { background: #dc3545 !important; color: white !important; }
-        .btn-grey { background: #6c757d !important; color: white !important; }
-        .settings-row { margin: 10px 0; text-align: left; }
+        #cm-overlay { position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5) !important; z-index: 9999999 !important; display: none; align-items: center; justify-content: center; font-family: sans-serif; }
+        #cm-modal { background: #fff !important; width: 90%; max-width: 500px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        .cm-header { padding: 20px; border-bottom: 1px solid #eee; text-align: center; }
+        .cm-body { padding: 20px; max-height: 300px; overflow-y: auto; }
+        .cm-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
+        .cm-footer { padding: 20px; background: #fdfdfd; text-align: center; }
+        .btn-main { width: 100%; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+        .btn-blue { background: #0056b3; color: white; }
+        .btn-grey { background: #e0e0e0; color: #333; }
+        #cookie-float-btn { position: fixed; bottom: 20px; right: 20px; z-index: 9999998; width: 50px; height: 50px; border-radius: 50%; background: #0056b3; color: white; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 20px; }
     `;
     document.head.appendChild(style);
 
-    // 3. Crear Estructura del Banner
-    function crearBanner() {
-        if (document.getElementById('mi-banner-cookies')) return;
-        const div = document.createElement('div');
-        div.id = 'mi-banner-cookies';
-        div.innerHTML = `
-            <div style="max-width: 600px; margin: auto; text-align: center;">
-                <h2 style="margin-top:0;">Configuración de Cookies</h2>
-                <p style="font-size: 14px; color: #555;">Utilizamos cookies propias y de terceros para mejorar tu experiencia. Tú decides qué compartes.</p>
-                
-                <div id="main-btns">
-                    <button class="btn-cookie btn-red" onclick="aplicarConsentimiento('rechazo')">Rechazar Todo</button>
-                    <button class="btn-cookie btn-blue" onclick="aplicarConsentimiento('todo')">Aceptar Todo</button>
-                    <button class="btn-cookie btn-grey" onclick="toggleAjustes()">Ajustes</button>
-                </div>
-
-                <div id="ajustes-panel" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid #ddd;">
-                    <div class="settings-row"><input type="checkbox" checked disabled> <strong>Necesarias</strong> (Siempre activas)</div>
-                    <div class="settings-row"><input type="checkbox" id="check-ana" checked> Analítica (Rendimiento)</div>
-                    <div class="settings-row"><input type="checkbox" id="check-ads" checked> Marketing y Publicidad</div>
-                    <button class="btn-cookie btn-blue" onclick="guardarAjustes()">Guardar Cambios</button>
-                </div>
-                
-                <div style="margin-top:15px; font-size: 12px;">
-                    <a href="#" style="color: #666; text-decoration: underline;">Política de Cookies</a>
-                </div>
+    // 3. Estructura HTML
+    const overlay = document.createElement('div');
+    overlay.id = 'cm-overlay';
+    overlay.innerHTML = `
+        <div id="cm-modal">
+            <div class="cm-header"><h3>Configuración de privacidad</h3></div>
+            <div class="cm-body">
+                <p style="font-size: 13px; color: #666;">Gestiona tus permisos de datos.</p>
+                <div class="cm-row"><span>Necesarias</span> <input type="checkbox" checked disabled></div>
+                <div class="cm-row"><span>Rendimiento</span> <input type="checkbox" id="c-ana"></div>
+                <div class="cm-row"><span>Funcionales</span> <input type="checkbox" id="c-fun"></div>
+                <div class="cm-row"><span>Publicidad</span> <input type="checkbox" id="c-ads"></div>
+                <p style="font-size: 11px; margin-top: 15px;"><u>Política de cookies</u></p>
             </div>
-        `;
-        document.body.appendChild(div);
+            <div class="cm-footer">
+                <button class="btn-main btn-blue" onclick="guardarConsentimiento('todo')">Aceptar todo</button>
+                <button class="btn-main btn-grey" onclick="guardarConsentimiento('custom')">Guardar ajustes</button>
+                <button class="btn-main" style="background:none;" onclick="guardarConsentimiento('rechazo')">Rechazar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // 4. Botón flotante
+    const floatBtn = document.createElement('button');
+    floatBtn.id = 'cookie-float-btn';
+    floatBtn.innerHTML = '🍪';
+    floatBtn.onclick = () => { overlay.style.display = 'flex'; };
+    document.body.appendChild(floatBtn);
+
+    // 5. Lógica de guardado
+    window.guardarConsentimiento = (tipo) => {
+        const ana = document.getElementById('c-ana').checked;
+        const fun = document.getElementById('c-fun').checked;
+        const ads = document.getElementById('c-ads').checked;
+
+        const consentimiento = {
+            'analytics_storage': (tipo === 'todo' || (tipo === 'custom' && ana)) ? 'granted' : 'denied',
+            'functionality_storage': (tipo === 'todo' || (tipo === 'custom' && fun)) ? 'granted' : 'denied',
+            'ad_storage': (tipo === 'todo' || (tipo === 'custom' && ads)) ? 'granted' : 'denied',
+            'ad_user_data': (tipo === 'todo' || (tipo === 'custom' && ads)) ? 'granted' : 'denied',
+            'ad_personalization': (tipo === 'todo' || (tipo === 'custom' && ads)) ? 'granted' : 'denied'
+        };
+
+        gtag('consent', 'update', consentimiento);
+        overlay.style.display = 'none';
+        localStorage.setItem('cookie_set', 'true');
+        console.log("Consentimiento actualizado:", consentimiento);
+    };
+
+    // Auto-abrir si es la primera vez
+    if (!localStorage.getItem('cookie_set')) {
+        overlay.style.display = 'flex';
     }
-
-    // 4. Funciones de Lógica
-    window.toggleAjustes = () => {
-        const panel = document.getElementById('ajustes-panel');
-        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-    };
-
-    window.aplicarConsentimiento = (tipo) => {
-        const isGranted = (tipo === 'todo');
-        gtag('consent', 'update', {
-            'analytics_storage': isGranted ? 'granted' : 'denied',
-            'ad_storage': isGranted ? 'granted' : 'denied',
-            'ad_user_data': isGranted ? 'granted' : 'denied',
-            'ad_personalization': isGranted ? 'granted' : 'denied'
-        });
-        document.getElementById('mi-banner-cookies').style.display = 'none';
-        localStorage.setItem('cookies_decision', 'ok');
-    };
-
-    window.guardarAjustes = () => {
-        gtag('consent', 'update', {
-            'analytics_storage': document.getElementById('check-ana').checked ? 'granted' : 'denied',
-            'ad_storage': document.getElementById('check-ads').checked ? 'granted' : 'denied',
-            'ad_user_data': document.getElementById('check-ads').checked ? 'granted' : 'denied',
-            'ad_personalization': document.getElementById('check-ads').checked ? 'granted' : 'denied'
-        });
-        document.getElementById('mi-banner-cookies').style.display = 'none';
-        localStorage.setItem('cookies_decision', 'ok');
-    };
-
-    // 5. Carga Segura
-    if (document.body) { crearBanner(); } else { window.addEventListener('load', crearBanner); }
 })();
