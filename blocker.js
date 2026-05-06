@@ -1,136 +1,119 @@
-(function() {
-    // 0. Limpieza previa (por si lo ejecutas varias veces)
-    const elementsToRemove = ['cookie-banner-bar', 'cookie-modal-overlay', 'cookie-float-btn', 'cookie-styles'];
-    elementsToRemove.forEach(id => { const el = document.getElementById(id); if(el) el.remove(); });
+(function () {
+    // 1. COMPROBAR SI YA EXISTE CONSENTIMIENTO (PERSISTENCIA)
+    const consentSaved = localStorage.getItem('mi_cookie_consent');
 
-    // 1. Inicialización de Consentimiento (Google Consent Mode v2 - G100 por defecto)
+    // 2. INICIALIZACIÓN DE GTAG Y SEÑAL G100
     window.dataLayer = window.dataLayer || [];
-    window.gtag = window.gtag || function(){ dataLayer.push(arguments); };
-    gtag('consent', 'default', {
-        'analytics_storage': 'denied', 'ad_storage': 'denied', 'ad_user_data': 'denied', 'ad_personalization': 'denied'
-    });
+    function gtag() { dataLayer.push(arguments); }
+    window.gtag = gtag;
 
-    // 2. Inyectar Estilos Avanzados (Modern Flow + Switches)
-    const style = document.createElement('style');
-    style.id = 'cookie-styles';
-    style.innerHTML = `
-        /* Estilos base */
-        .cookie-btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-family: sans-serif; transition: 0.2s; font-size: 14px; }
-        .cookie-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .cookie-btn-primary { background-color: #007bff; color: white; }
-        .cookie-btn-secondary { background-color: #e9ecef; color: #333; margin-right: 8px; }
-        .cookie-btn-danger { background: none; color: #dc3545; font-size: 12px; padding: 0; }
-
-        /* 1. BANNER INFERIOR (Flujo inicial) */
-        #cookie-banner-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); z-index: 99999999; padding: 15px 25px; display: none; align-items: center; justify-content: space-between; font-family: sans-serif; box-sizing: border-box; }
-        #cookie-banner-bar p { margin: 0; color: #333; font-size: 14px; }
-
-        /* 2. MODAL DE AJUSTES (Centrado con Toggles) */
-        #cookie-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999999999; display: none; align-items: center; justify-content: center; font-family: sans-serif; }
-        #cookie-modal-card { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .cookie-modal-header h3 { margin: 0 0 10px 0; font-size: 18px; }
-        .cookie-modal-body p { color: #666; font-size: 13px; margin: 0 0 20px 0; }
-        
-        /* Estilos del Switch (Toggle) estilo iOS */
-        .switch-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 14px; color: #333; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #007bff; }
-        input:checked + .slider:before { transform: translateX(20px); }
-
-        /* 3. BOTÓN FLOTANTE (Reapertura) */
-        #cookie-float-btn { position: fixed; bottom: 20px; right: 20px; z-index: 9999998; width: 50px; height: 50px; border-radius: 50%; background: #333; color: white; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 22px; display: none; }
-    `;
-    document.head.appendChild(style);
-
-    // 3. Crear Estructura HTML (Banner, Modal y Botón Galleta)
-    
-    // a. Banner Inferior (Inicial)
-    const banner = document.createElement('div');
-    banner.id = 'cookie-banner-bar';
-    banner.innerHTML = `
-        <p>Usamos cookies para mejorar tu experiencia. ¿Nos das permiso?</p>
-        <div style="display:flex; align-items:center;">
-            <button class="cookie-btn cookie-btn-secondary" onclick="window.abrirAjustes()" style="font-size:12px;">Ajustes</button>
-            <button class="cookie-btn cookie-btn-primary" onclick="window.gestionarConsentimiento('todo')">Aceptar Todo</button>
-        </div>
-    `;
-    document.body.appendChild(banner);
-
-    // b. Modal de Ajustes (Switches)
-    const overlay = document.createElement('div');
-    overlay.id = 'cookie-modal-overlay';
-    overlay.innerHTML = `
-        <div id="cookie-modal-card">
-            <div class="cookie-modal-header"><h3>Configuración de privacidad</h3></div>
-            <div class="cookie-modal-body">
-                <p>Elige qué datos nos permites usar.</p>
-                <div class="switch-container"><span>Necesarias</span> <input type="checkbox" checked disabled style="width:20px;height:20px;"></div>
-                <div class="switch-container"><span>Analítica</span> <label class="switch"><input type="checkbox" id="cook-ana" checked><span class="slider"></span></label></div>
-                <div class="switch-container"><span>Marketing</span> <label class="switch"><input type="checkbox" id="cook-ads" checked><span class="slider"></span></label></div>
-                <p style="font-size:11px; margin-top:15px; color:#999; text-align:center;"><u>Política de cookies</u></p>
-            </div>
-            <div class="cookie-modal-footer" style="text-align:center; margin-top:20px;">
-                <button class="cookie-btn cookie-btn-secondary" onclick="window.gestionarConsentimiento('rechazo')" style="width:100%; margin-bottom:10px;">Rechazar</button>
-                <button class="cookie-btn cookie-btn-primary" onclick="window.gestionarConsentimiento('custom')" style="width:100%;">Guardar ajustes</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-
-    // c. Botón flotante
-    const floatBtn = document.createElement('button');
-    floatBtn.id = 'cookie-float-btn';
-    floatBtn.innerHTML = '🍪';
-    floatBtn.onclick = () => { overlay.style.display = 'flex'; };
-    document.body.appendChild(floatBtn);
-
-    // 4. Lógica de Flujo y Consentimiento
-    
-    // Función para abrir el modal desde el banner o la galleta
-    window.abrirAjustes = function() {
-        banner.style.display = 'none'; // Ocultamos el banner
-        overlay.style.display = 'flex'; // Mostramos el modal
+    // Si no hay consentimiento, lanzamos el default (G100)
+    if (!consentSaved) {
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'personalization_storage': 'denied',
+            'functionality_storage': 'granted',
+            'security_storage': 'granted'
+        });
+        // Forzamos el hit para InfoTrust
+        gtag('js', new Date());
+        gtag('config', 'G-B67TFXZRE7', { 'debug_mode': true });
     }
 
-    // Función maestra de guardado (G111)
-    window.gestionarConsentimiento = (tipo) => {
-        const ana = document.getElementById('cook-ana').checked;
-        const ads = document.getElementById('cook-ads').checked;
+    // 3. FUNCIÓN PARA CREAR LA UI (Banner, Modal y Galleta)
+    const initUI = () => {
+        // Limpieza de restos
+        ['cm-container', 'cm-style', 'cookie-float-btn', 'cm-modal-div'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.remove();
+        });
 
-        // Si es 'rechazo', ana y ads se fuerzan a 'false'
-        const ana_final = (tipo === 'rechazo') ? false : ((tipo === 'todo') ? true : ana);
-        const ads_final = (tipo === 'rechazo') ? false : ((tipo === 'todo') ? true : ads);
+        // Inyectar Estilos
+        const style = document.createElement('style');
+        style.id = 'cm-style';
+        style.innerHTML = `
+            #cm-container { position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; z-index: 999999999 !important; font-family: sans-serif !important; }
+            #cm-banner { background: #fff !important; padding: 20px !important; box-shadow: 0 -5px 15px rgba(0,0,0,0.1) !important; display: ${consentSaved ? 'none' : 'flex'} !important; align-items: center !important; justify-content: space-between !important; border-top: 3px solid #0056b3 !important; }
+            #cm-modal-div { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0,0,0,0.7) !important; display: none; align-items: center; justify-content: center; z-index: 9999999999 !important; }
+            .cm-card { background: #fff !important; padding: 30px !important; border-radius: 16px !important; width: 90% !important; max-width: 400px !important; text-align: center !important; }
+            .btn { padding: 12px 20px !important; border-radius: 8px !important; border: none !important; cursor: pointer !important; font-weight: 600 !important; margin: 5px !important; }
+            .cookie-row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+            #cookie-float-btn { position: fixed !important; top: 50% !important; left: 0 !important; transform: translateY(-50%) !important; z-index: 99999998 !important; width: 45px !important; height: 50px !important; border-radius: 0 10px 10px 0 !important; background: #333 !important; display: ${consentSaved ? 'block' : 'none'}; cursor: pointer !important; border: none !important; font-size: 22px !important; }
+        `;
+        document.head.appendChild(style);
 
-        const consentimiento = {
-            'analytics_storage': ana_final ? 'granted' : 'denied',
-            'ad_storage': ads_final ? 'granted' : 'denied',
-            'ad_user_data': ads_final ? 'granted' : 'denied',
-            'ad_personalization': ads_final ? 'granted' : 'denied'
+        // Crear Modal
+        const modal = document.createElement('div');
+        modal.id = 'cm-modal-div';
+        modal.innerHTML = `<div class="cm-card">
+            <h3>Ajustes de Cookies</h3>
+            <div style="text-align:left; margin: 20px 0;">
+                <div class="cookie-row"><span><strong>Necesarias</strong></span> <input type="checkbox" checked disabled></div>
+                <div class="cookie-row"><span>Analíticas</span> <input type="checkbox" id="c-ana" checked></div>
+                <div class="cookie-row"><span>Rendimiento</span> <input type="checkbox" id="c-rend" checked></div>
+                <div class="cookie-row"><span>Marketing</span> <input type="checkbox" id="c-ads" checked></div>
+            </div>
+            <button id="btn-save" class="btn" style="width:100%; background:#0056b3; color:white;">Guardar Selección</button>
+        </div>`;
+        document.body.appendChild(modal);
+
+        // Crear Banner
+        const container = document.createElement('div');
+        container.id = 'cm-container';
+        container.innerHTML = `<div id="cm-banner">
+            <div style="max-width: 60%;"><strong>Privacidad</strong><p style="font-size:12px; margin:5px 0 0 0;">Configura tus cookies (G100 bloqueado).</p></div>
+            <div style="display:flex;">
+                <button id="btn-ajustes" class="btn" style="background:#eee;">Ajustes</button>
+                <button id="btn-rechazar" class="btn" style="background:#f8f9fa;">Solo Necesarias</button>
+                <button id="btn-aceptar" class="btn" style="background:#0056b3; color:white;">Aceptar Todo</button>
+            </div>
+        </div>`;
+        document.body.appendChild(container);
+
+        // Crear Galleta
+        const floatBtn = document.createElement('button');
+        floatBtn.id = 'cookie-float-btn';
+        floatBtn.innerHTML = '🍪';
+        document.body.appendChild(floatBtn);
+
+        // Lógica de Consentimiento (G111)
+        const handleConsent = (tipo) => {
+            const ana = (tipo === 'rechazo') ? false : (tipo === 'todo' ? true : document.getElementById('c-ana').checked);
+            const ads = (tipo === 'rechazo') ? false : (tipo === 'todo' ? true : document.getElementById('c-ads').checked);
+            const rend = (tipo === 'rechazo') ? false : (tipo === 'todo' ? true : document.getElementById('c-rend').checked);
+
+            const data = {
+                'analytics_storage': ana ? 'granted' : 'denied',
+                'ad_storage': ads ? 'granted' : 'denied',
+                'ad_user_data': ads ? 'granted' : 'denied',
+                'ad_personalization': ads ? 'granted' : 'denied',
+                'personalization_storage': rend ? 'granted' : 'denied',
+                'functionality_storage': 'granted',
+                'security_storage': 'granted'
+            };
+
+            gtag('consent', 'update', data);
+            localStorage.setItem('mi_cookie_consent', JSON.stringify(data));
+
+            document.getElementById('cm-banner').style.display = 'none';
+            modal.style.display = 'none';
+            floatBtn.style.display = 'block';
         };
 
-        // Enviar señal a Google
-        gtag('consent', 'update', consentimiento);
-        
-        // Cerrar todo y mostrar galleta
-        banner.style.display = 'none';
-        overlay.style.display = 'none';
-        floatBtn.style.display = 'block';
-        
-        // Guardar decisión
-        localStorage.setItem('cookie_decision_made', 'true');
-        console.log("Consentimiento actualizado (G111):", consentimiento);
-        alert('Tus preferencias han sido guardadas. InfoTrust detectará G111.');
+        // Eventos
+        document.getElementById('btn-ajustes').onclick = () => modal.style.display = 'flex';
+        document.getElementById('btn-aceptar').onclick = () => handleConsent('todo');
+        document.getElementById('btn-rechazar').onclick = () => handleConsent('rechazo');
+        document.getElementById('btn-save').onclick = () => handleConsent('custom');
+        floatBtn.onclick = () => modal.style.display = 'flex';
     };
 
-    // 5. Inicialización
-    if (!localStorage.getItem('cookie_decision_made')) {
-        // Primera vez: Mostrar banner inferior
-        banner.style.display = 'flex';
+    // Ejecutar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUI);
     } else {
-        // Decision ya tomada: Solo mostrar galleta
-        floatBtn.style.display = 'block';
+        initUI();
     }
 })();
