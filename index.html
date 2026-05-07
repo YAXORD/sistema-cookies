@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cookie Scanner & Consent - Pro 2026</title>
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYY3S66S9P"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      // ESTADO DEFAULT: Crucial para que InfoTrust vea "Activo"
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'personalization_storage': 'denied',
+        'functionality_storage': 'granted'
+      });
+    </script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
+        #cookie-reopen { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; border-radius: 50%; border: none; background: #1a73e8; color: white; cursor: pointer; font-size: 26px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔍 Sistema de Detección</h1>
+        <p>Estado: <span style="color: #2ecc71; font-weight: bold;">CONECTADO</span></p>
+    </div>
+    <button id="cookie-reopen" onclick="abrirModal()">🍪</button>
+    <script src="/blocker.js?v=4000"></script>
+</body>
+</html>
