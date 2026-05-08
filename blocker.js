@@ -18,14 +18,12 @@
             'functionality_storage': 'granted',
             'security_storage': 'granted'
         });
-        // Forzamos el hit para InfoTrust
         gtag('js', new Date());
         gtag('config', 'G-B67TFXZRE7', { 'debug_mode': true });
     }
 
     // 3. FUNCIÓN PARA CREAR LA UI (Banner, Modal y Galleta)
     const initUI = () => {
-        // Limpieza de restos
         ['cm-container', 'cm-style', 'cookie-float-btn', 'cm-modal-div'].forEach(id => {
             const el = document.getElementById(id); if (el) el.remove();
         });
@@ -63,7 +61,7 @@
         const container = document.createElement('div');
         container.id = 'cm-container';
         container.innerHTML = `<div id="cm-banner">
-            <div style="max-width: 60%;"><strong>Privacidad</strong><p style="font-size:12px; margin:5px 0 0 0;">Configura tus cookies (G100 bloqueado).</p></div>
+            <div style="max-width: 60%;"><strong>Privacidad</strong><p style="font-size:12px; margin:5px 0 0 0;">Configura tus cookies.</p></div>
             <div style="display:flex;">
                 <button id="btn-ajustes" class="btn" style="background:#eee;">Ajustes</button>
                 <button id="btn-rechazar" class="btn" style="background:#f8f9fa;">Solo Necesarias</button>
@@ -78,7 +76,7 @@
         floatBtn.innerHTML = '🍪';
         document.body.appendChild(floatBtn);
 
-        // Lógica de Consentimiento (G111)
+        // 4. Lógica de Consentimiento (G111)
         const handleConsent = (tipo) => {
             const ana = (tipo === 'rechazo') ? false : (tipo === 'todo' ? true : document.getElementById('c-ana').checked);
             const ads = (tipo === 'rechazo') ? false : (tipo === 'todo' ? true : document.getElementById('c-ads').checked);
@@ -97,9 +95,9 @@
             gtag('consent', 'update', data);
             localStorage.setItem('mi_cookie_consent', JSON.stringify(data));
 
-           // Forzar el cierre de todo el contenedor
-            const container = document.getElementById('cm-container');
-            if (container) container.style.setProperty('display', 'none', 'important');
+            // Ocultamos el contenedor del banner blanco para siempre
+            const bannerContainer = document.getElementById('cm-container');
+            if (bannerContainer) bannerContainer.style.setProperty('display', 'none', 'important');
             
             modal.style.display = 'none';
             floatBtn.style.display = 'block';
@@ -110,7 +108,11 @@
         document.getElementById('btn-aceptar').onclick = () => handleConsent('todo');
         document.getElementById('btn-rechazar').onclick = () => handleConsent('rechazo');
         document.getElementById('btn-save').onclick = () => handleConsent('custom');
-        floatBtn.onclick = () => modal.style.display = 'flex';
+        
+        // Al pulsar la galleta, SOLO abrimos el modal de ajustes
+        floatBtn.onclick = () => {
+            modal.style.display = 'flex';
+        };
     };
 
     // Ejecutar cuando el DOM esté listo
