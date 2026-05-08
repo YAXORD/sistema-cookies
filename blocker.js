@@ -97,7 +97,10 @@
             gtag('consent', 'update', data);
             localStorage.setItem('mi_cookie_consent', JSON.stringify(data));
 
-            document.getElementById('cm-banner').style.display = 'none';
+           // Forzar el cierre de todo el contenedor
+            const container = document.getElementById('cm-container');
+            if (container) container.style.setProperty('display', 'none', 'important');
+            
             modal.style.display = 'none';
             floatBtn.style.display = 'block';
         };
